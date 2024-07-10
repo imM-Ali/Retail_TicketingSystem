@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticketer</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        .product-item {
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                flex: 0 0 66.666667%;
+                max-width: 66.666667%;
+            }
+        }
+
+        .category-filter {
+            margin-bottom: 10px;
+        }
+
+        .filter-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-buttons {
+            margin-top: 10px;
+        }
+
+        .size-row {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .size-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .size-products {
+            margin-top: 10px;
+        }
+
+        .size-product {
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        .print-size {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .sticky-sidebar {
+            position: sticky;
+            top: 20px;
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 order-md-1 order-sm-2 main-content">
+                <div class="container mt-5">
+
+                    <div class="filter-container">
+                        <h2 class="mr-auto">Products</h2>
+                        <div class="d-flex justify-content-end align-items-center">
+                            <label class="mr-2">Filter by Category:</label>
+                            <select class="form-control category-filter" id="category-select">
+                                <option value="all" selected>All Categories</option>
+                                {% for category in categories|sort %}
+                                <option value="{{ category.strip() }}">{{ category.strip() }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group d-flex">
+                        <input type="text" id="product-search" class="form-control" placeholder="Search Products">
+                        <button type="button" id="reset-search" class="btn btn-secondary ml-2">Reset</button>
+                    </div>
+
+                    <div id="product-list" class="mt-4">
+                        <div class="row" id="product-cards">
+                            {% for product in products %}
+                            <div class="col-lg-4 col-md-6 mb-4 product-item" data-product-id="{{ product.id }}"
+                                data-category="{{ product.category }}">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title product-name">{{ product.name }}</h5>
+                                        <div class="form-group">
+                                            <label for="original-price-{{ product.id }}">Original Price:</label>
+                                            <input type="text" class="form-control original-price"
+                                                id="original-price-{{ product.id }}"
+                                                value="{{ product.original_price }}" disabled>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="discounted-price-{{ product.id }}">Discounted Price:</label>
+                                            <input type="text" class="form-control discounted-price"
+                                                id="discounted-price-{{ product.id }}"
+                                                value="{{ product.discounted_price }}" disabled>
+                                        </div>
+                                        <div class="product-buttons">
+                                            <button type="button" class="btn btn-primary btn-sm edit-product"
+                                                data-product-id="{{ product.id }}">Edit</button>
+                                            <button type="button" class="btn btn-success btn-sm save-product d-none"
+                                                data-product-id="{{ product.id }}">Save</button>
+                                            <button type="button"
+                                                class="btn btn-secondary btn-sm cancel-edit d-none">Cancel</button>
+                                            <button type="button" class="btn btn-info btn-sm print-product"
+                                                data-product-id="{{ product.id }}" data-size="A4">A4</button>
+                                            <button type="button" class="btn btn-info btn-sm print-product"
+                                                data-product-id="{{ product.id }}" data-size="A6">A6</button>
+                                            <button type="button" class="btn btn-info btn-sm print-product"
+                                                data-product-id="{{ product.id }}" data-size="A7">A7</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 order-md-2 order-sm-1 sticky-sidebar">
+                <div class="container mt-5">
+                    <div class="size-row">
+                        <h3 class="size-title">A4 Queue</h3>
+                        <form id="a4-form" action="/submit-products" method="POST">
+                            <div class="size-products" id="a4-products">
+                                <!-- Products will be dynamically added here -->
+                            </div>
+                            <input type="hidden" name="selected_size" value="A4">
+                            <button type="button" class="btn btn-info btn-sm print-size" data-size="A4">Print</button>
+                        </form>
+                    </div>
+                    <div class="size-row">
+                        <h3 class="size-title">A6 Queue</h3>
+                        <form id="a6-form" action="/submit-products" method="POST">
+                            <div class="size-products" id="a6-products">
+                                <!-- .....and here -->
+                            </div>
+                            <input type="hidden" name="selected_size" value="A6">
+                            <button type="button" class="btn btn-info btn-sm print-size" data-size="A6">Print</button>
+                        </form>
+                    </div>
+                    <div class="size-row">
+                        <h3 class="size-title">A7 Queue</h3>
+                        <form id="a7-form" action="/submit-products" method="POST">
+                            <div class="size-products" id="a7-products">
+                                <!-- ......and here -->
+                            </div>
+                            <input type="hidden" name="selected_size" value="A7">
+                            <button type="button" class="btn btn-info btn-sm print-size" data-size="A7">Print</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const searchInput = document.getElementById('product-search');
+            const productItems = document.querySelectorAll('.product-item');
+            const resetSearchButton = document.getElementById('reset-search');
+
+            searchInput.addEventListener('input', function () {
+                const searchQuery = searchInput.value.trim().toLowerCase();
+
+                productItems.forEach(function (item) {
+                    const productName = item.querySelector('.product-name').innerText.toLowerCase();
+                    if (productName.includes(searchQuery)) {
+                        item.classList.remove('hidden');
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+            });
+            resetSearchButton.addEventListener('click', function () {
+                searchInput.value = '';
+                productItems.forEach(function (item) {
+                    item.classList.remove('hidden');
+                });
+            });
+
+            const categorySelect = document.getElementById('category-select');
+            categorySelect.addEventListener('change', function () {
+                const selectedCategory = categorySelect.value;
+
+                // Get all product items
+                const productCards = document.getElementById('product-cards');
+
+                // Iterate through each product card
+                Array.from(productCards.children).forEach(function (card) {
+                    const cardCategory = card.getAttribute('data-category');
+
+                    // Check if card matches selected category or show all
+                    if (selectedCategory === 'all' || cardCategory === selectedCategory) {
+                        card.classList.remove('hidden');
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+
+                //Move visible cards to the top of the container
+                const visibleCards = Array.from(productCards.children).filter(function (card) {
+                    return !card.classList.contains('hidden');
+                });
+
+                visibleCards.forEach(function (card) {
+                    productCards.insertBefore(card, productCards.firstChild);
+                });
+            });
+
+            //Edit button functionality for each product
+            const editButtons = document.querySelectorAll('.edit-product');
+            editButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const productId = button.getAttribute('data-product-id');
+                    const cardBody = button.closest('.card-body');
+
+                    //Hide edit button and show save and cancel buttons
+                    button.classList.add('d-none');
+                    cardBody.querySelector('.save-product').classList.remove('d-none');
+                    cardBody.querySelector('.cancel-edit').classList.remove('d-none');
+
+                    //Enable editing of inputs
+                    const productNameInput = cardBody.querySelector('.product-name');
+                    const originalPriceInput = cardBody.querySelector('.original-price');
+                    const discountedPriceInput = cardBody.querySelector('.discounted-price');
+
+                    productNameInput.contentEditable = true;
+                    originalPriceInput.disabled = false;
+                    discountedPriceInput.disabled = false;
+                });
+            });
+            //Save button functionality for each product
+            const saveButtons = document.querySelectorAll('.save-product');
+            saveButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const productId = button.getAttribute('data-product-id');
+                    const cardBody = button.closest('.card-body');
+
+                    //Update product details
+                    const productName = cardBody.querySelector('.product-name').innerText;
+                    const originalPrice = cardBody.querySelector('.original-price').value;
+                    const discountedPrice = cardBody.querySelector('.discounted-price').value;
+
+                    // Hide save and cancel buttons, show edit button
+                    button.classList.add('d-none');
+                    cardBody.querySelector('.cancel-edit').classList.add('d-none'); // Hide cancel button
+
+                    cardBody.querySelector('.edit-product').classList.remove('d-none');
+
+                    // Disable editing of inputs
+                    const productNameInput = cardBody.querySelector('.product-name');
+                    const originalPriceInput = cardBody.querySelector('.original-price');
+                    const discountedPriceInput = cardBody.querySelector('.discounted-price');
+
+                    productNameInput.contentEditable = false;
+                    originalPriceInput.disabled = true;
+                    discountedPriceInput.disabled = true;
+                });
+            });
+
+
+            // Cancel button functionality for each product
+            const cancelButtons = document.querySelectorAll('.cancel-edit');
+            cancelButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const productId = button.getAttribute('data-product-id');
+                    const cardBody = button.closest('.card-body');
+
+                    // Hide save and cancel buttons, show edit button
+                    button.classList.add('d-none');
+                    cardBody.querySelector('.save-product').classList.add('d-none');
+                    cardBody.querySelector('.edit-product').classList.remove('d-none');
+
+                    // Disable editing of inputs
+                    const productNameInput = cardBody.querySelector('.product-name');
+                    const originalPriceInput = cardBody.querySelector('.original-price');
+                    const discountedPriceInput = cardBody.querySelector('.discounted-price');
+
+                    productNameInput.contentEditable = false;
+                    originalPriceInput.disabled = true;
+                    discountedPriceInput.disabled = true;
+                });
+            });
+
+            //functionality to add products to relative queues
+            const printButtons = document.querySelectorAll('.print-product');
+            printButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const productId = button.getAttribute('data-product-id');
+                    const selectedSize = button.getAttribute('data-size');
+
+                    //Add product name and discounted price to the corresponding size row
+                    const sizeRowId = `${selectedSize.toLowerCase()}-products`;
+                    const sizeRow = document.getElementById(sizeRowId);
+
+                    const productCard = button.closest('.product-item');
+                    const productName = productCard.querySelector('.product-name').innerText;
+                    const discountedPrice = productCard.querySelector('.discounted-price').value;
+
+                    // Create a div element to hold name, discounted price, and delete button
+                    const productInfo = document.createElement('div');
+                    productInfo.classList.add('size-product');
+                    productInfo.innerHTML = `
+                        <strong>${productName}</strong><br>
+                        Discounted Price: ${discountedPrice}
+                        <button type="button" class="btn btn-danger btn-sm delete-product ml-2">X</button>
+                    `;
+                    productInfo.setAttribute('data-product-id', productId)
+                    productInfo.setAttribute('data-discountedPrice', discountedPrice)
+                    productInfo.setAttribute('data-productName', productName)
+
+                    // Append product info to the size row
+                    sizeRow.appendChild(productInfo);
+
+                    // Add event listener for delete button
+                    const deleteButton = productInfo.querySelector('.delete-product');
+                    deleteButton.addEventListener('click', function () {
+                        productInfo.remove();
+                    });
+                });
+            });
+            //functionality to finalize queue and send a form with all the products to the backend
+            const printSizeButtons = document.querySelectorAll('.print-size');
+            printSizeButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const selectedSize = button.getAttribute('data-size');
+                    const sizeRowId = `${selectedSize.toLowerCase()}-products`;
+                    const sizeRow = document.getElementById(sizeRowId);
+                    const form = button.closest('form');
+
+                    // Clear existing hidden inputs
+                    form.querySelectorAll('input[type="hidden"]').forEach(input => {
+                        if (!input.name.includes('selected_size')) {
+                            input.remove();
+                        }
+                    });
+
+                    // Add product IDs and details as hidden inputs
+                    const productsToPrint = sizeRow.querySelectorAll('.size-product');
+                    productsToPrint.forEach(function (product, index) {
+
+                        const productId = product.getAttribute('data-product-id');
+                        const productName = product.querySelector('strong').innerText;
+                        const discountedPrice = product.getAttribute('data-discountedPrice')
+
+                        const discountedPriceInput = document.createElement('input');
+                        discountedPriceInput.type = 'hidden';
+                        discountedPriceInput.name = `product_discounted_price_${index}_${productId}`;
+                        discountedPriceInput.value = discountedPrice;
+
+                        const productIdInput = document.createElement('input');
+                        productIdInput.type = 'hidden';
+                        productIdInput.name = 'product';
+                        productIdInput.value = productId;
+
+                        const productNameInput = document.createElement('input');
+                        productNameInput.type = 'hidden';
+                        productNameInput.name = `product_name_${index}_${productId}`;
+                        productNameInput.value = productName;
+
+                        form.appendChild(productNameInput);
+                        form.appendChild(discountedPriceInput);
+                        form.appendChild(productIdInput);
+                    });
+
+                    form.submit();
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

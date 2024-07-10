@@ -1,0 +1,7 @@
+Flask
+flask_sqlalchemy
+gunicorn
+python-docx
+docxcompose
+selenium
+beautifulsoup4
